@@ -1,11 +1,11 @@
 #include <iostream>
 using namespace std;
 
-class music {
+class Music {
 public:
     int year, duration;
     string name, alb_name;
-    music *next, *prev;
+    Music *next, *prev;
 
     void accept();
     void display();
@@ -14,43 +14,53 @@ public:
     void search();
 };
 
-music *start = nullptr;
+Music *start = nullptr;
 
-void music::accept() {
-    music* newnode = new music;
+void Music::accept() {
+    Music* newnode = new Music;
     cout << "\nEnter music details: ";
     cout << "\nEnter name, album name, released year, duration: ";
     cin >> newnode->name >> newnode->alb_name >> newnode->year >> newnode->duration;
-    newnode->next = nullptr;
+    newnode->next = newnode->prev = nullptr;
 
-    if (start == nullptr) {
-        newnode->prev = nullptr;
+    if (start == nullptr) { // If the list is empty
         start = newnode;
+        newnode->next = newnode; // Point to itself for circular link
+        newnode->prev = newnode; // Point to itself for circular link
     } else {
-        music* temp = start;
-        while (temp->next != nullptr) {
-            temp = temp->next;
-        }
-        temp->next = newnode;
-        newnode->prev = temp;
+        Music* last = start->prev; // The last node
+        last->next = newnode; // Link last node to the new node
+        newnode->prev = last; // Link new node back to last
+        newnode->next = start; // Link new node to start (circular)
+        start->prev = newnode; // Link start back to new node (circular)
     }
 }
 
-void music::display() {
-    music* temp = start;
-    while (temp != nullptr) {
+void Music::display() {
+    if (start == nullptr) {
+        cout << "\nThe list is empty.";
+        return;
+    }
+
+    Music* temp = start;
+    do {
         cout << "\n" << temp->name << "\t" << temp->alb_name << "\t" << temp->year << "\t" << temp->duration;
         temp = temp->next;
-    }
+    } while (temp != start);
 }
 
-void music::update() {
+void Music::update() {
     string title;
     cout << "\nEnter title: ";
     cin >> title;
 
-    music* temp = start;
-    while (temp != nullptr) {
+    if (start == nullptr) {
+        cout << "The list is empty.";
+        return;
+    }
+
+    Music* temp = start;
+    do {
         if (temp->name == title) {
             cout << "\nEnter new music name, album, year, and duration: ";
             cin >> temp->name >> temp->alb_name >> temp->year >> temp->duration;
@@ -58,55 +68,71 @@ void music::update() {
             return;
         }
         temp = temp->next;
-    }
+    } while (temp != start);
     cout << "Music not found.";
 }
 
-void music::remove() {
+void Music::remove() {
     string title;
     cout << "\nEnter title: ";
     cin >> title;
 
-    music* temp = start;
-    while (temp != nullptr) {
+    if (start == nullptr) {
+        cout << "The list is empty.";
+        return;
+    }
+
+    Music* temp = start;
+    do {
         if (temp->name == title) {
-            if (temp->prev != nullptr) {
-                temp->prev->next = temp->next;
+            if (temp->next == temp) { // If it is the only node
+                delete temp;
+                start = nullptr; // The list is now empty
+                cout << "The last music entry was deleted.";
+                return;
             } else {
-                start = temp->next; // Update the start if the first node is deleted
-            }
-
-            if (temp->next != nullptr) {
+                // If we are deleting a node other than the last node
+                temp->prev->next = temp->next;
                 temp->next->prev = temp->prev;
-            }
 
-            cout << "\nDeleting: " << temp->name << "\t" << temp->alb_name << "\t" << temp->year << "\t" << temp->duration;
-            delete temp;
-            return;
+                // If the node to be deleted is the start node
+                if (temp == start) {
+                    start = temp->next; // Update start to be the next node
+                }
+                cout << "\nDeleting: " << temp->name << "\t" << temp->alb_name << "\t" << temp->year << "\t" << temp->duration;
+                delete temp;
+                return;
+            }
         }
         temp = temp->next;
-    }
+    } while (temp != start);
     cout << "Music not found.";
 }
 
-void music::search() {
+void Music::search() {
     string title;
     cout << "\nEnter title: ";
     cin >> title;
 
-    music* temp = start;
-    while (temp != nullptr) {
+    if (start == nullptr) {
+        cout << "The list is empty.";
+        return;
+    }
+
+    Music* temp = start;
+    do {
         if (temp->name == title) {
             cout << "\n" << temp->name << "\t" << temp->alb_name << "\t" << temp->year << "\t" << temp->duration;
             return;
         }
         temp = temp->next;
-    }
+    } while (temp != start);
     cout << "Music not found.";
 }
 
 int main() {
     int ch;
+    Music m; // Create an instance of the Music class for calling member functions
     do {
         cout << "\n1. Accept music details";
         cout << "\n2. Display music details";
@@ -117,7 +143,6 @@ int main() {
         cout << "\nEnter choice: ";
         cin >> ch;
 
-        music m; // Create an instance to call the member functions
         switch (ch) {
             case 1: m.accept(); break;
             case 2: m.display(); break;
